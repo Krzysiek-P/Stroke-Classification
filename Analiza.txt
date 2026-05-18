@@ -1,0 +1,63 @@
+================================================================================
+1. TYPY ZMIENNYCH (LICZBOWE vs KATEGORYCZNE)
+================================================================================
+
+--- Podsumowanie typów ---
+id                     int64
+gender                object
+age                  float64
+hypertension           int64
+heart_disease          int64
+ever_married          object
+work_type             object
+Residence_type        object
+avg_glucose_level    float64
+bmi                  float64
+smoking_status        object
+stroke                 int64
+dtype: object
+
+--- Zmienne liczbowe (numeric) ---
+Liczba zmiennych numerycznych: 7
+Lista: ['id', 'age', 'hypertension', 'heart_disease', 'avg_glucose_level', 'bmi', 'stroke']
+
+--- Zmienne kategoryczne (object/categorical) ---
+Liczba zmiennych kategorycznych: 5
+Lista: ['gender', 'ever_married', 'work_type', 'Residence_type', 'smoking_status']
+
+
+================================================================================
+2. BRAKI DANYCH (MISSING VALUES)
+================================================================================
+
+--- Wszystkie kolumny z brakami danych ---
+     Brakujące wartości  Procent (%)
+bmi                 201     3.933464
+
+
+================================================================================
+3. STATYSTYKI OPISOWE (ZMIENNE NUMERYCZNE)
+================================================================================
+             id      age  hypertension  heart_disease  avg_glucose_level      bmi   stroke
+count   5110.00  5110.00        5110.0        5110.00            5110.00  4909.00  5110.00
+mean   36517.83    43.23           0.1           0.05             106.15    28.89     0.05
+std    21161.72    22.61           0.3           0.23              45.28     7.85     0.22
+min       67.00     0.08           0.0           0.00              55.12    10.30     0.00
+25%    17741.25    25.00           0.0           0.00              77.24    23.50     0.00
+50%    36932.00    45.00           0.0           0.00              91.88    28.10     0.00
+75%    54682.00    61.00           0.0           0.00             114.09    33.10     0.00
+max    72940.00    82.00           1.0           1.00             271.74    97.60     1.00
+
+
+================================================================================
+4. BALANS KLAS (zmienna docelowa: stroke)
+================================================================================
+Brak udaru (0): 4861 (95.13%)
+Udar (1): 249 (4.87%)
+
+
+================================================================================
+*4a. BALANS KLAS z brakującymi wartościami w kolumnie 'bmi' i procentowy udział tych braków w każdej klasie*
+================================================================================
+Brak udaru (0): 161 (3.31%)
+Udar (1): 40 (16.06%)
