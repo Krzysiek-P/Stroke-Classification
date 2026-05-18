@@ -2,7 +2,7 @@
 #importy
 
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import pandas as pd
 
 ################################################################################################
@@ -50,6 +50,7 @@ missing_data = missing_data[missing_data['Brakujące wartości'] > 0].sort_value
 
 print("\n--- Wszystkie kolumny z brakami danych ---")
 print(missing_data)
+print("\n")
 
 ################################################################################################
 #statystyki opisowe
@@ -73,3 +74,15 @@ for val in stroke_counts.index:
     print(f"{label} ({val}): {stroke_counts[val]} ({stroke_percent[val]:.2f}%)")
 print("\n")
 
+################################################################################################
+#balans klas z brakującymi wartościami w kolumnie 'bmi' oraz porównanie z balansem klas w całym zbiorze danych
+print("=" * 80)
+print("*4a. BALANS KLAS z brakującymi wartościami w kolumnie 'bmi' i procentowy udział tych braków w każdej klasie*")
+print("=" * 80)
+
+counts = data[data['bmi'].isna()]['stroke'].value_counts()
+
+for val, count in counts.items():
+    label = "Brak udaru" if val == 0 else "Udar"
+    print(f"{label} ({val}): {count} ({count / stroke_counts[val]:.2%})")
+print("\n")
