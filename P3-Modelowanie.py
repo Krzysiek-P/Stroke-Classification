@@ -4,11 +4,14 @@
 import pandas as pd
 import numpy as np
 from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import SMOTE
 from sklearn.impute import SimpleImputer
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import balanced_accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 import warnings
 
 #ignorowanie warningów - biblioteka generuje dużo FutureWarningów, które nie mają wpływu na działanie kodu, a jedynie zaśmiecają output
@@ -24,47 +27,96 @@ y = data['stroke'].values
 imputer = SimpleImputer(strategy='median')
 scaler = StandardScaler()
 
-clf = GaussianNB()
+gnb = GaussianNB()
+knn = KNeighborsClassifier()
+dt = DecisionTreeClassifier()
 rskf = RepeatedStratifiedKFold(n_repeats=5, n_splits=2)
 undersample = RandomUnderSampler()
+smote = SMOTE()
 
-bac_scores = []
-recall_scores = []
-precision_scores = []
-f1_scores = []
+results = {
+    'Undersampling': {
+        'GaussianNB': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
+        'KNN': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
+        'DecisionTree': {'bac': [], 'recall': [], 'precision': [], 'f1': []}
+    },
+    'SMOTE': {
+        'GaussianNB': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
+        'KNN': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
+        'DecisionTree': {'bac': [], 'recall': [], 'precision': [], 'f1': []}
+    }
+}
 
 ################################################################################################
 #modelowanie
 
-for i, (train_index, test_index) in enumerate(rskf.split(X, y)):
-    #podział danych na zbiór treningowy i testowy
-    X_train, y_train = X[train_index], y[train_index]
-    X_test, y_test = X[test_index], y[test_index]
+# definicja metod resamplingu
+resampling_methods = {
+    'Undersampling': undersample,
+    'SMOTE': smote
+}
 
-    #uzupełnienie braków w bmi
-    X_train = imputer.fit_transform(X_train)
-    X_test = imputer.transform(X_test)
+for method_name, resampler in resampling_methods.items():  
+    for i, (train_index, test_index) in enumerate(rskf.split(X, y)):
+        # podział danych na zbiór treningowy i testowy
+        X_train, y_train = X[train_index], y[train_index]
+        X_test, y_test = X[test_index], y[test_index]
 
-    #skalowanie cech
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
+        # uzupełnienie braków w bmi
+        X_train = imputer.fit_transform(X_train)
+        X_test = imputer.transform(X_test)
 
-    #undersampling danych treningowych
-    X_train_resampled, y_train_resampled = undersample.fit_resample(X_train, y_train)
-    
-    #trenowanie modelu i ocena
-    clf.fit(X_train_resampled, y_train_resampled)
-    predict = clf.predict(X_test)
+        # skalowanie cech
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
 
-    #obliczanie metryk    
-    bac_scores.append(balanced_accuracy_score(y_test, predict))
-    recall_scores.append(recall_score(y_test, predict))
-    precision_scores.append(precision_score(y_test, predict))
-    f1_scores.append(f1_score(y_test, predict))
-
+        # resampling danych treningowych
+        X_train_resampled, y_train_resampled = resampler.fit_resample(X_train, y_train)
+        
+        # ===== GaussianNB =====
+        gnb.fit(X_train_resampled, y_train_resampled)
+        predict_gnb = gnb.predict(X_test)
+        results[method_name]['GaussianNB']['bac'].append(balanced_accuracy_score(y_test, predict_gnb))
+        results[method_name]['GaussianNB']['recall'].append(recall_score(y_test, predict_gnb))
+        results[method_name]['GaussianNB']['precision'].append(precision_score(y_test, predict_gnb))
+        results[method_name]['GaussianNB']['f1'].append(f1_score(y_test, predict_gnb))
+        
+        # ===== KNN =====
+        knn.fit(X_train_resampled, y_train_resampled)
+        predict_knn = knn.predict(X_test)
+        results[method_name]['KNN']['bac'].append(balanced_accuracy_score(y_test, predict_knn))
+        results[method_name]['KNN']['recall'].append(recall_score(y_test, predict_knn))
+        results[method_name]['KNN']['precision'].append(precision_score(y_test, predict_knn))
+        results[method_name]['KNN']['f1'].append(f1_score(y_test, predict_knn))
+        
+        # ===== Decision Tree =====
+        dt.fit(X_train_resampled, y_train_resampled)
+        predict_dt = dt.predict(X_test)
+        results[method_name]['DecisionTree']['bac'].append(balanced_accuracy_score(y_test, predict_dt))
+        results[method_name]['DecisionTree']['recall'].append(recall_score(y_test, predict_dt))
+        results[method_name]['DecisionTree']['precision'].append(precision_score(y_test, predict_dt))
+        results[method_name]['DecisionTree']['f1'].append(f1_score(y_test, predict_dt))
 ################################################################################################
 #podsumowanie wyników
-print(f'BAC: {np.mean(bac_scores):.3f} ± {np.std(bac_scores):.3f}')
-print(f'Recall: {np.mean(recall_scores):.3f} ± {np.std(recall_scores):.3f}')
-print(f'Precision: {np.mean(precision_scores):.3f} ± {np.std(precision_scores):.3f}')
-print(f'F1 Score: {np.mean(f1_scores):.3f} ± {np.std(f1_scores):.3f}')
+print("\n" + "=" * 80)
+print("PODSUMOWANIE WYNIKÓW")
+print("=" * 80)
+
+for method_name in results.keys():
+    print(f"\n{'='*60}")
+    print(f"METODA RESAMPLINGU: {method_name}")
+    print(f"{'='*60}")
+    for clf_name in results[method_name].keys():
+        print(f"\n--- {clf_name} ---")
+        print(f"  BAC: {np.mean(results[method_name][clf_name]['bac']):.3f} ± {np.std(results[method_name][clf_name]['bac']):.3f}")
+        print(f"  Recall: {np.mean(results[method_name][clf_name]['recall']):.3f} ± {np.std(results[method_name][clf_name]['recall']):.3f}")
+        print(f"  Precision: {np.mean(results[method_name][clf_name]['precision']):.3f} ± {np.std(results[method_name][clf_name]['precision']):.3f}")
+        print(f"  F1 Score: {np.mean(results[method_name][clf_name]['f1']):.3f} ± {np.std(results[method_name][clf_name]['f1']):.3f}")
+
+print("\n" + "=" * 80)
+print("PORÓWNANIE - ŚREDNIE BAC (Undersampling vs SMOTE)")
+print("=" * 80)
+for clf_name in results['Undersampling'].keys():
+    under_bac = np.mean(results['Undersampling'][clf_name]['bac'])
+    smote_bac = np.mean(results['SMOTE'][clf_name]['bac'])
+    print(f"{clf_name}: Undersampling = {under_bac:.3f} | SMOTE = {smote_bac:.3f}")
