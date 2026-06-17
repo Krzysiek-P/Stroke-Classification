@@ -12,6 +12,7 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 import warnings
 
 #ignorowanie warningów - biblioteka generuje dużo FutureWarningów, które nie mają wpływu na działanie kodu, a jedynie zaśmiecają output
@@ -30,20 +31,23 @@ scaler = StandardScaler()
 gnb = GaussianNB()
 knn = KNeighborsClassifier()
 dt = DecisionTreeClassifier()
-rskf = RepeatedStratifiedKFold(n_repeats=5, n_splits=2)
-undersample = RandomUnderSampler()
-smote = SMOTE()
+rf = RandomForestClassifier(random_state=42)
+rskf = RepeatedStratifiedKFold(n_repeats=5, n_splits=2, random_state=42)
+undersample = RandomUnderSampler(random_state=42)
+smote = SMOTE(random_state=42)
 
 results = {
     'Undersampling': {
         'GaussianNB': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
         'KNN': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
-        'DecisionTree': {'bac': [], 'recall': [], 'precision': [], 'f1': []}
+        'DecisionTree': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
+        'RandomForest': {'bac': [], 'recall': [], 'precision': [], 'f1': []}
     },
     'SMOTE': {
         'GaussianNB': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
         'KNN': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
-        'DecisionTree': {'bac': [], 'recall': [], 'precision': [], 'f1': []}
+        'DecisionTree': {'bac': [], 'recall': [], 'precision': [], 'f1': []},
+        'RandomForest': {'bac': [], 'recall': [], 'precision': [], 'f1': []}
     }
 }
 
@@ -71,7 +75,9 @@ for method_name, resampler in resampling_methods.items():
         X_test = scaler.transform(X_test)
 
         # resampling danych treningowych
-        X_train_resampled, y_train_resampled = resampler.fit_resample(X_train, y_train)
+        #X_train_resampled, y_train_resampled = resampler.fit_resample(X_train, y_train)
+        #bez resamplingu, aby sprawdzić, jak modele radzą sobie na niezbalansowanych danych
+        X_train_resampled, y_train_resampled = X_train, y_train
         
         # ===== GaussianNB =====
         gnb.fit(X_train_resampled, y_train_resampled)
@@ -96,6 +102,15 @@ for method_name, resampler in resampling_methods.items():
         results[method_name]['DecisionTree']['recall'].append(recall_score(y_test, predict_dt))
         results[method_name]['DecisionTree']['precision'].append(precision_score(y_test, predict_dt))
         results[method_name]['DecisionTree']['f1'].append(f1_score(y_test, predict_dt))
+
+        # ===== Random Forest =====
+        rf.fit(X_train_resampled, y_train_resampled)
+        predict_rf = rf.predict(X_test)
+        results[method_name]['RandomForest']['bac'].append(balanced_accuracy_score(y_test, predict_rf))
+        results[method_name]['RandomForest']['recall'].append(recall_score(y_test, predict_rf))
+        results[method_name]['RandomForest']['precision'].append(precision_score(y_test, predict_rf))
+        results[method_name]['RandomForest']['f1'].append(f1_score(y_test, predict_rf))
+
 ################################################################################################
 #podsumowanie wyników
 print("\n" + "=" * 80)
