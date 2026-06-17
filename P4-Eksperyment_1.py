@@ -34,6 +34,9 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import balanced_accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -271,3 +274,82 @@ for clf_name in models.keys():
     print(f"  Najwyższe BAC:    {best_bac:.3f}")
 
 print("\n" + "=" * 80)
+
+################################################################################################
+# WIZUALIZACJA WYNIKÓW (ZAPIS DO PLIKÓW PNG)
+
+print("Generowanie i zapisywanie wykresów...")
+
+# Ustawienie stylu wykresów
+sns.set_theme(style="whitegrid")
+
+# Upewnijmy się, że istnieje folder na wykresy (opcjonalnie)
+os.makedirs('wykresy', exist_ok=True)
+
+# -------------------------------------------------------------------------
+# WYKRES 1: Wyniki BAC dla różnych metod dla DecisionTree
+# -------------------------------------------------------------------------
+dt_methods = list(resamplers.keys())
+dt_bac_means = [np.mean(results['DecisionTree'][m]['bac']) for m in dt_methods]
+
+plt.figure(figsize=(14, 7))
+ax1 = sns.barplot(x=dt_methods, y=dt_bac_means, palette="Blues_d")
+plt.title('Eksperyment 1: Wpływ metod resamplingu na BAC (Decision Tree)', fontsize=16)
+plt.ylabel('Balanced Accuracy (BAC)', fontsize=12)
+plt.xlabel('Metoda resamplingu', fontsize=12)
+plt.xticks(rotation=45, ha='right')
+
+# Dodanie wartości nad słupkami
+for p in ax1.patches:
+    ax1.annotate(f'{p.get_height():.3f}', 
+                 (p.get_x() + p.get_width() / 2., p.get_height()), 
+                 ha='center', va='center', 
+                 xytext=(0, 9), 
+                 textcoords='offset points')
+
+# Dostosowanie zakresu osi Y dla lepszej czytelności różnic
+min_val = min(dt_bac_means)
+max_val = max(dt_bac_means)
+plt.ylim(max(0, min_val - 0.1), min(1.0, max_val + 0.1)) 
+
+plt.tight_layout()
+plt.savefig('wykresy/wykres_E1_DecisionTree_BAC.png', dpi=300)
+plt.close()
+
+
+# -------------------------------------------------------------------------
+# WYKRES 2: Najlepsze wyniki BAC dla każdego klasyfikatora (wraz z metodą)
+# -------------------------------------------------------------------------
+classifiers = list(models.keys())
+best_bacs = []
+best_methods = []
+
+for clf in classifiers:
+    best_method = max(resamplers.keys(), key=lambda m: np.mean(results[clf][m]['bac']))
+    best_bacs.append(np.mean(results[clf][best_method]['bac']))
+    best_methods.append(best_method)
+
+plt.figure(figsize=(12, 7))
+ax2 = sns.barplot(x=classifiers, y=best_bacs, palette="magma")
+plt.title('Eksperyment 1: Najlepsze wyniki BAC dla poszczególnych klasyfikatorów', fontsize=16)
+plt.ylabel('Maksymalne Balanced Accuracy (BAC)', fontsize=12)
+plt.xlabel('Klasyfikator', fontsize=12)
+
+# Dodanie adnotacji z wynikiem BAC oraz nazwą NAJLEPSZEJ metody nad słupkami
+for i, p in enumerate(ax2.patches):
+    text = f"{best_methods[i]}\nBAC: {best_bacs[i]:.3f}"
+    ax2.annotate(text, 
+                 (p.get_x() + p.get_width() / 2., p.get_height()), 
+                 ha='center', va='bottom', 
+                 xytext=(0, 5), 
+                 textcoords='offset points',
+                 fontsize=10, fontweight='bold', color='black')
+
+# Ustawienie osi Y od 0 do 1
+plt.ylim(0, 1.1)
+
+plt.tight_layout()
+plt.savefig('wykresy/wykres_E1_Najlepsze_Modele.png', dpi=300)
+plt.close()
+
+print("Wykresy zostały zapisane w folderze 'wykresy/'.")

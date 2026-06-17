@@ -23,6 +23,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import balanced_accuracy_score, f1_score, precision_score, recall_score
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
 
 ################################################################################################
 # 1. Wczytanie danych
@@ -158,3 +161,78 @@ for model_name, res in best_results.items():
     print(f"  BAC przy tym progu:       {res['best_bac']:.3f}")
     print(f"  Recall przy tym progu:    {res['metrics']['recall']:.3f}")
     print(f"  Precision przy tym progu: {res['metrics']['precision']:.3f}")
+
+################################################################################################
+# 5. WIZUALIZACJA WYNIKÓW (ZAPIS DO PLIKÓW PNG)
+
+print("\nGenerowanie i zapisywanie wykresów...")
+
+# Ustawienie stylu wykresów
+sns.set_theme(style="whitegrid")
+os.makedirs('wykresy', exist_ok=True)
+
+# Lista do osi X
+thresh_list = list(thresholds)
+
+# --- WYKRESY SZCZEGÓŁOWE (12 wykresów: 3 modele * 4 metryki) ---
+for model_name in models.keys():
+    # Zbieranie uśrednionych metryk testowych dla całego zakresu progów
+    mean_bac_list = [np.mean(results[model_name][t]['bac']) for t in thresh_list]
+    mean_recall_list = [np.mean(results[model_name][t]['recall']) for t in thresh_list]
+    mean_precision_list = [np.mean(results[model_name][t]['precision']) for t in thresh_list]
+    mean_f1_list = [np.mean(results[model_name][t]['f1']) for t in thresh_list]
+    
+    metrics_to_plot = {
+        'BAC': mean_bac_list,
+        'Recall': mean_recall_list,
+        'Precision': mean_precision_list,
+        'F1_Score': mean_f1_list
+    }
+    
+    # Tworzenie pojedynczych wykresów liniowych
+    for metric_name, metric_values in metrics_to_plot.items():
+        plt.figure(figsize=(10, 6))
+        sns.lineplot(x=thresh_list, y=metric_values, marker='o', color='b', linewidth=2)
+        
+        plt.title(f'Wpływ progu decyzyjnego na {metric_name}\n(Klasyfikator: {model_name})', fontsize=15)
+        plt.xlabel('Próg decyzyjny (Threshold)', fontsize=12)
+        plt.ylabel(metric_name, fontsize=12)
+        plt.xlim(0, 0.8)
+        plt.ylim(0, 1.05)
+        
+        # Zaznaczenie punktu "domyślnego" 0.5 pionową linią dla orientacji
+        plt.axvline(x=0.5, color='red', linestyle='--', alpha=0.6, label='Domyślny próg (0.5)')
+        plt.legend(loc='lower right')
+        
+        plt.tight_layout()
+        plt.savefig(f'wykresy/wykres_E2_{model_name}_{metric_name}.png', dpi=300)
+        plt.close()
+
+
+# --- WYKRES PODSUMOWUJĄCY: NAJLEPSZE WYNIKI BAC ---
+model_names = list(best_results.keys())
+best_bacs = [best_results[m]['best_bac'] for m in model_names]
+best_threshs = [best_results[m]['best_thresh'] for m in model_names]
+
+plt.figure(figsize=(12, 7))
+ax = sns.barplot(x=model_names, y=best_bacs, palette="viridis")
+plt.title('Eksperyment 2: Najlepsze wyniki BAC z optymalnym progiem decyzyjnym', fontsize=16)
+plt.xlabel('Klasyfikator', fontsize=12)
+plt.ylabel('Maksymalne Balanced Accuracy (BAC)', fontsize=12)
+plt.ylim(0, 1.1)
+
+# Dodanie adnotacji z optymalnym progiem i wynikiem nad każdym słupkiem
+for i, p in enumerate(ax.patches):
+    text = f"Optymalny próg: {best_threshs[i]:.2f}\nBAC: {best_bacs[i]:.3f}"
+    ax.annotate(text, 
+                (p.get_x() + p.get_width() / 2., p.get_height()), 
+                ha='center', va='bottom', 
+                xytext=(0, 5), 
+                textcoords='offset points',
+                fontsize=11, fontweight='bold')
+
+plt.tight_layout()
+plt.savefig('wykresy/wykres_E2_Podsumowanie_BAC.png', dpi=300)
+plt.close()
+
+print("Wszystkie wykresy (12 szczegółowych + 1 podsumowujący) zostały zapisane w folderze 'wykresy/'.")

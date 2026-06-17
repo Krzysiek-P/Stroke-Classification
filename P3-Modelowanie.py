@@ -75,9 +75,9 @@ for method_name, resampler in resampling_methods.items():
         X_test = scaler.transform(X_test)
 
         # resampling danych treningowych
-        #X_train_resampled, y_train_resampled = resampler.fit_resample(X_train, y_train)
+        X_train_resampled, y_train_resampled = resampler.fit_resample(X_train, y_train)
         #bez resamplingu, aby sprawdzić, jak modele radzą sobie na niezbalansowanych danych
-        X_train_resampled, y_train_resampled = X_train, y_train
+        #X_train_resampled, y_train_resampled = X_train, y_train
         
         # ===== GaussianNB =====
         gnb.fit(X_train_resampled, y_train_resampled)
