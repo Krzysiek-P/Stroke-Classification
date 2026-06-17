@@ -299,6 +299,10 @@ plt.ylabel('Balanced Accuracy (BAC)', fontsize=12)
 plt.xlabel('Metoda resamplingu', fontsize=12)
 plt.xticks(rotation=45, ha='right')
 
+# Linia Baseline z P3-Modelowanie
+plt.axhline(y=0.576, color='red', linestyle='--', linewidth=2, label='Baseline (0.576)', alpha=0.5)
+plt.legend()
+
 # Dodanie wartości nad słupkami
 for p in ax1.patches:
     ax1.annotate(f'{p.get_height():.3f}', 

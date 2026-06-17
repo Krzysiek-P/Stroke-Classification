@@ -135,3 +135,5 @@ for clf_name in results['Undersampling'].keys():
     under_bac = np.mean(results['Undersampling'][clf_name]['bac'])
     smote_bac = np.mean(results['SMOTE'][clf_name]['bac'])
     print(f"{clf_name}: Undersampling = {under_bac:.3f} | SMOTE = {smote_bac:.3f}")
+
+

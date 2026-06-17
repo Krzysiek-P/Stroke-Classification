@@ -26,6 +26,9 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import warnings
+
+warnings.filterwarnings('ignore')
 
 ################################################################################################
 # 1. Wczytanie danych
@@ -37,8 +40,8 @@ y = data['stroke'].values
 ################################################################################################
 # 2. Ustawienia eksperymentu
 
-# Progi decyzyjne do przetestowania (od 1% do 80% co 2 punkty procentowe)
-thresholds = np.arange(0.01, 0.80, 0.02) 
+# Progi decyzyjne do przetestowania (od 1% do 55% co 2 punkty procentowe)
+thresholds = np.arange(0.01, 0.55, 0.02) 
 
 # Definicja modeli
 models = {
@@ -197,7 +200,7 @@ for model_name in models.keys():
         plt.title(f'Wpływ progu decyzyjnego na {metric_name}\n(Klasyfikator: {model_name})', fontsize=15)
         plt.xlabel('Próg decyzyjny (Threshold)', fontsize=12)
         plt.ylabel(metric_name, fontsize=12)
-        plt.xlim(0, 0.8)
+        plt.xlim(0, 0.55)
         plt.ylim(0, 1.05)
         
         # Zaznaczenie punktu "domyślnego" 0.5 pionową linią dla orientacji
