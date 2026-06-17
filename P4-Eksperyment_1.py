@@ -68,7 +68,7 @@ rskf = RepeatedStratifiedKFold(n_repeats=5, n_splits=2, random_state=42)
 
 models = {
     'DecisionTree': DecisionTreeClassifier(random_state=42),
-    'RandomForest': RandomForestClassifier(random_state=42),
+    'RandomForest': RandomForestClassifier(random_state=42, max_depth=5, min_samples_split=20, min_samples_leaf=10),
     'KNN': KNeighborsClassifier(),
     'GaussianNB': GaussianNB()
 }
